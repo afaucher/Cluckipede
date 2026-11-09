@@ -1,13 +1,13 @@
 // The Brine Horde: medieval pickle infantry animated on stop-motion twos.
 import * as THREE from 'three';
 import { CFG, PALETTE } from './config.js';
-import { part, merge, outlineMaterial, toonGradient, inkMesh } from './materials.js';
+import { part, merge, outlineMaterial, toonMat, bakeAO } from './materials.js';
 import {
   moveOnSphere, turn, placeOnSphere, tangentToward, signedAngle, clamp, toTangent, randomUnit, rightOf,
 } from './sphere.js';
 
 const R = CFG.R0;
-const ENEMY_SCALE = 1.45;
+const ENEMY_SCALE = 1.8;
 const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
 const _h = new THREE.Vector3();
@@ -53,10 +53,10 @@ function geos() {
     body: merge([
       part(new THREE.CapsuleGeometry(0.55, 0.8, 4, 10), 0xa6dc24, { pos: [0, 0.95, 0] }),
       ...bumps(9, 0.52, 0.5, 1.4, 0x76a818, 0.09, 7),
-      ...eyes(0.45, 1.3, 0.2),
-      part(new THREE.SphereGeometry(0.62, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), 0x8e959c, { pos: [0, 1.5, 0] }),
-      part(new THREE.CylinderGeometry(0.75, 0.75, 0.07, 14), 0x6d737a, { pos: [0, 1.52, 0] }),
-      part(new THREE.SphereGeometry(0.1, 6, 4), 0x6d737a, { pos: [0, 2.12, 0] }),
+      ...eyes(0.5, 1.22, 0.21, 0.16),
+      part(new THREE.SphereGeometry(0.5, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), 0x8e959c, { pos: [0, 1.58, -0.05] }),
+      part(new THREE.CylinderGeometry(0.6, 0.6, 0.07, 14), 0x6d737a, { pos: [0, 1.6, -0.05] }),
+      part(new THREE.SphereGeometry(0.08, 6, 4), 0x6d737a, { pos: [0, 2.1, -0.05] }),
       part(new THREE.CapsuleGeometry(0.12, 0.3, 3, 6), 0x8cc21f, { pos: [-0.62, 1.0, 0.15], rot: [0.6, 0, 0.3] }),
     ]),
     weapon: merge([
@@ -116,6 +116,9 @@ function geos() {
     hand: [0, 0, 0.95],
   };
   for (const k of Object.keys(G)) {
+    G[k].body.computeBoundingBox();
+    const bb = G[k].body.boundingBox;
+    bakeAO(G[k].body, bb.min.y, bb.max.y * 0.8, 0.5);
     G[k].body.computeBoundingSphere();
     G[k].weapon.computeBoundingSphere();
   }
@@ -127,9 +130,9 @@ let MATS = null;
 function mats() {
   if (MATS) return MATS;
   MATS = {
-    body: new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient() }),
+    body: toonMat({ vertexColors: true }, { scale: 0.9, strength: 0.65 }),
     flash: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-    burn: new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient(), color: 0xff9050, emissive: 0x401000 }),
+    burn: toonMat({ vertexColors: true, color: 0xff9050, emissive: 0x401000 }, { scale: 0.9, strength: 0.65 }),
   };
   return MATS;
 }
@@ -163,9 +166,11 @@ export class Enemy {
     const G = geos()[type], M = mats();
     this.mesh = new THREE.Group();
     this.body = new THREE.Mesh(G.body, M.body);
-    this.body.add(new THREE.Mesh(G.body, outlineMaterial(type === 'brute' ? 0.09 : 0.06)));
+    this.body.castShadow = true;
+    this.body.add(new THREE.Mesh(G.body, outlineMaterial(type === 'brute' ? 0.08 : 0.06)));
     this.mesh.add(this.body);
     this.weapon = new THREE.Mesh(G.weapon, M.body);
+    this.weapon.castShadow = true;
     this.weapon.add(new THREE.Mesh(G.weapon, outlineMaterial(0.04)));
     this.weaponPivot = new THREE.Group();
     this.weaponPivot.position.set(...G.hand);

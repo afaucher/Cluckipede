@@ -89,7 +89,7 @@ export class FX {
   }
 
   muzzle(pos, dir) {
-    const col = new THREE.Color(PALETTE.yolk).multiplyScalar(1.8);
+    const col = new THREE.Color(PALETTE.yolk).multiplyScalar(1.15);
     for (let k = 0; k < 2; k++) {
       _v.copy(dir).multiplyScalar(6 + Math.random() * 8);
       _v.x += (Math.random() - 0.5) * 3; _v.y += (Math.random() - 0.5) * 3; _v.z += (Math.random() - 0.5) * 3;
@@ -118,7 +118,7 @@ export class FX {
   }
 
   sparks(pos, color = 0xfff0a0, count = 6) {
-    this.burst(pos, { count, color, intensity: 2.5, speed: 12, size: 0.12, life: 0.25, up: 0.5, grav: 10, drag: 2 });
+    this.burst(pos, { count, color, intensity: 1.4, speed: 12, size: 0.1, life: 0.22, up: 0.5, grav: 10, drag: 2 });
   }
 
   // ---------------------------------------------------------------------------

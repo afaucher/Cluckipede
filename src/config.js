@@ -6,7 +6,7 @@ const R_MIN = 5; // minimum turn radius of the Cluckipede at cruising speed
 export const CFG = {
   // --- Egg architecture ---------------------------------------------------
   R0: 100, // canonical radius of the active layer
-  LAYER_SCALE: 0.65, // L1 = 0.65x, L2 = 0.65^2 ≈ 0.42x
+  LAYER_SCALE: 1 - 0.35 * (2 / 3), // ≈0.767: gap between shells is 2/3 of the original 0.65 spacing
   VISIBLE_INNER_LAYERS: 2,
   SHELL_THICKNESS: 4,
   ICO_DETAIL: 6, // icosphere subdivisions for the shell mesh
@@ -48,10 +48,10 @@ export const CFG = {
 };
 
 export const PALETTE = {
-  ivory: 0xefe6cf,
-  ivoryShade: 0xcdbf9f,
-  dirt: 0x8f6c45,
-  crack: 0x5a4330,
+  ivory: 0xe4d6b4,
+  ivoryShade: 0xbca986,
+  dirt: 0x7d5b38,
+  crack: 0x4a3420,
   yolk: 0xffb02e,
   yolkDeep: 0xe0791a,
   brine: 0x9dff2e,

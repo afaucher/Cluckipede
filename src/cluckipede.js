@@ -2,7 +2,7 @@
 // Spine-as-health: each body segment is one hit point (with armour plating).
 import * as THREE from 'three';
 import { CFG, PALETTE } from './config.js';
-import { part, merge, ink, outlineMaterial, toonGradient, inkMesh, toon } from './materials.js';
+import { part, merge, ink, outlineMaterial, inkMesh, toon, toonMat, bakeAO } from './materials.js';
 import {
   moveOnSphere, turn, placeOnSphere, tangentToward, signedAngle, clamp, toTangent, rightOf, damp,
 } from './sphere.js';
@@ -71,20 +71,20 @@ function geo() {
     part(new THREE.ConeGeometry(0.16, 2.2, 6), 0x8a5a2b, { pos: [-0.35, 1.0, -1.0], rot: [-Math.PI / 2 + 0.25, 0, -0.3] }),
     part(new THREE.SphereGeometry(0.7, 10, 8), PALETTE.armor, { pos: [0, 0.95, 0], scale: [1, 0.7, 1.1] }),
   ];
-  GEO = { seg: merge(segParts), head: merge(head), beakU, beakL, leg, tail: merge(tail) };
+  GEO = { seg: bakeAO(merge(segParts), 0.3, 2.0, 0.5), head: bakeAO(merge(head), 0.6, 3.0, 0.62), beakU, beakL, leg, tail: bakeAO(merge(tail), 0.3, 1.6, 0.5) };
   return GEO;
 }
 
 let MATS = null;
 function mats() {
   if (MATS) return MATS;
-  const g = toonGradient();
+  const G = { scale: 0.7, strength: 0.6 };
   MATS = {
-    normal: new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: g }),
-    damaged: new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: g, color: 0xff8f70 }),
-    critical: new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: g, color: 0xff5a40, emissive: 0x401000 }),
+    normal: toonMat({ vertexColors: true }, G),
+    damaged: toonMat({ vertexColors: true, color: 0xff8f70 }, G),
+    critical: toonMat({ vertexColors: true, color: 0xff5a40, emissive: 0x401000 }, G),
     flash: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-    charged: new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: g, emissive: 0x7a4a00 }),
+    charged: toonMat({ vertexColors: true, emissive: 0x7a4a00 }, G),
     leg: toon(0x8a5a2b),
   };
   return MATS;
@@ -94,12 +94,14 @@ function buildSegmentMesh() {
   const G = geo(), M = mats();
   const group = new THREE.Group();
   const body = new THREE.Mesh(G.seg, M.normal);
-  body.add(new THREE.Mesh(G.seg, outlineMaterial(0.07)));
+  body.castShadow = true;
+  body.add(new THREE.Mesh(G.seg, outlineMaterial(0.11)));
   group.add(body);
   const legs = [];
   for (const sx of [-1, 1]) for (const sz of [-0.45, 0.45]) {
     const l = new THREE.Mesh(G.leg, M.leg);
     l.position.set(sx * 1.15, 0.85, sz);
+    l.castShadow = true;
     l.userData = { sx, sz };
     group.add(l);
     legs.push(l);
@@ -166,7 +168,8 @@ export class Cluckipede {
     const G = geo(), M = mats();
     this.head = new THREE.Group();
     this.headMesh = new THREE.Mesh(G.head, M.normal);
-    this.headMesh.add(new THREE.Mesh(G.head, outlineMaterial(0.08)));
+    this.headMesh.add(new THREE.Mesh(G.head, outlineMaterial(0.12)));
+    this.headMesh.castShadow = true;
     this.head.add(this.headMesh);
     this.beakU = inkMesh(G.beakU, PALETTE.beak, 0.06);
     this.beakL = inkMesh(G.beakL, 0xe09a10, 0.06);
@@ -176,7 +179,8 @@ export class Cluckipede {
     scene.add(this.head);
 
     this.tailTip = new THREE.Mesh(G.tail, M.normal);
-    ink(this.tailTip, 0.06);
+    this.tailTip.castShadow = true;
+    ink(this.tailTip, 0.09);
     scene.add(this.tailTip);
   }
 

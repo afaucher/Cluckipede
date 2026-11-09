@@ -5,6 +5,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import './style.css';
+import { InkPass, GradePass } from './post.js';
+import { HATCH_PX } from './materials.js';
 import { CFG, PALETTE } from './config.js';
 import { Layer } from './world.js';
 import { Cluckipede } from './cluckipede.js';
@@ -32,10 +34,14 @@ class Game {
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.shadowsOn = !params.has('noshadow');
+    this.renderer.shadowMap.enabled = this.shadowsOn;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    HATCH_PX.value = 6 * this.pixelRatio;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x1a0f07);
-    this.scene.fog = new THREE.Fog(0x3a2312, 70, 250);
+    this.scene.fog = new THREE.Fog(0x4a2c12, 90, 280);
     this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 1200);
 
     this._buildSky();
@@ -60,10 +66,18 @@ class Game {
     this.input = new Input(this.canvas);
 
     this.bloomOn = !params.has('nobloom');
-    this.composer = new EffectComposer(this.renderer);
+    const pr = this.pixelRatio;
+    const rt = new THREE.WebGLRenderTarget(window.innerWidth * pr, window.innerHeight * pr, { type: THREE.HalfFloatType, samples: 4 });
+    rt.depthTexture = new THREE.DepthTexture(window.innerWidth * pr, window.innerHeight * pr);
+    this.composer = new EffectComposer(this.renderer, rt);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.45, 0.82);
+    this.inkPass = new InkPass(this.camera);
+    this.inkPass.setSize(window.innerWidth * pr, window.innerHeight * pr);
+    this.composer.addPass(this.inkPass);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.45, 0.4, 0.86);
     this.composer.addPass(this.bloom);
+    this.gradePass = new GradePass();
+    this.composer.addPass(this.gradePass);
     this.composer.addPass(new OutputPass());
 
     this.raycaster = new THREE.Raycaster();
@@ -122,9 +136,15 @@ class Game {
   }
 
   _buildLights() {
-    this.ambient = new THREE.AmbientLight(0xfff0dd, 0.75);
-    this.key = new THREE.DirectionalLight(0xfff4e2, 2.0);
-    this.fill = new THREE.DirectionalLight(PALETTE.yolk, 0.6);
+    this.ambient = new THREE.AmbientLight(0xffe6c8, 0.55);
+    this.key = new THREE.DirectionalLight(0xfff0d8, 2.1);
+    this.fill = new THREE.DirectionalLight(PALETTE.yolk, 0.45);
+    this.key.castShadow = true;
+    const sc = this.key.shadow.camera;
+    sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 260;
+    this.key.shadow.mapSize.set(2048, 2048);
+    this.key.shadow.bias = -0.0006;
+    this.key.shadow.normalBias = 0.06;
     this.scene.add(this.ambient, this.key, this.fill, this.key.target, this.fill.target);
   }
 
@@ -133,8 +153,10 @@ class Game {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
+    this.composer.setPixelRatio(this.pixelRatio);
     this.composer.setSize(w, h);
-    this.bloom.setSize(w, h);
+    this.inkPass.setSize(w * this.pixelRatio, h * this.pixelRatio);
+    HATCH_PX.value = 6 * this.pixelRatio;
   }
 
   // -------------------------------------------------------------------------
@@ -230,6 +252,10 @@ class Game {
         this.renderer.setPixelRatio(this.pixelRatio);
         this.composer.setPixelRatio?.(this.pixelRatio);
         this.resize();
+      } else if (this.shadowsOn && avg > 1 / 30) {
+        this.shadowsOn = false;
+        this.renderer.shadowMap.enabled = false;
+        this.scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; });
       } else if (this.bloomOn && avg > 1 / 30) {
         this.bloomOn = false;
       }
@@ -570,7 +596,7 @@ class Game {
     const n = this.player.dir;
     const focus = this.rig.focus;
     const camRight = _v.crossVectors(this.rig.forward, n).normalize();
-    this.key.position.copy(focus).addScaledVector(n, 70).addScaledVector(camRight, -40).addScaledVector(this.rig.forward, 25);
+    this.key.position.copy(focus).addScaledVector(n, 120).addScaledVector(camRight, -60).addScaledVector(this.rig.forward, 35);
     this.key.target.position.copy(focus);
     this.fill.position.copy(focus).addScaledVector(n, 20).addScaledVector(camRight, 50).addScaledVector(this.rig.forward, -30);
     this.fill.target.position.copy(focus);
@@ -578,8 +604,12 @@ class Game {
   }
 
   render() {
-    if (this.bloomOn) this.composer.render();
-    else this.renderer.render(this.scene, this.camera);
+    if (this.tick) {
+      this.inkPass.uniforms.boil.value = (this.inkPass.uniforms.boil.value + 1) % 64;
+      this.gradePass.uniforms.seed.value = Math.random() * 100;
+    }
+    this.bloom.enabled = this.bloomOn;
+    this.composer.render();
   }
 }
 

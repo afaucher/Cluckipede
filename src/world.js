@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { CFG, PALETTE } from './config.js';
 import { mulberry32, randomUnit, fbm3, clamp, slerpDir, angleBetween, placeOnSphere, toTangent } from './sphere.js';
-import { toonGradient, ink, toon, glow, outlineMaterial } from './materials.js';
+import { ink, toon, toonMat, glow, outlineMaterial } from './materials.js';
 
 const R = CFG.R0;
 
@@ -344,7 +344,7 @@ export class Layer {
       rimP.push(...a.map((v) => v * rr), ...b.map((v) => v * rr), ...b2.map((v) => v * rr));
       rimP.push(...a.map((v) => v * rr), ...b2.map((v) => v * rr), ...a2.map((v) => v * rr));
       // cliff wall: upper (shaded rock) and lower glowing yolk band
-      const r0 = R, r1 = R - T * 0.62, r2 = R - T;
+      const r0 = R, r1 = R - T * 0.74, r2 = R - T;
       const q = (u, r) => u.map((x) => x * r);
       cliffP.push(...q(a, r0), ...q(b, r0), ...q(b, r1), ...q(a, r0), ...q(b, r1), ...q(a, r1));
       for (const rr2 of [r0, r0, r1, r0, r1, r1]) {
@@ -364,20 +364,21 @@ export class Layer {
       const l = Math.hypot(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]);
       nrm.setXYZ(i, P[i * 3] / l, P[i * 3 + 1] / l, P[i * 3 + 2] / l);
     }
-    this.shellMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient() });
+    this.shellMat = toonMat({ vertexColors: true }, { scale: 0.11, strength: 0.75, hatch: 0.8 });
     this.shell = new THREE.Mesh(geo, this.shellMat);
+    this.shell.receiveShadow = true;
     this.shell.name = 'shell';
 
     const cg = new THREE.BufferGeometry();
     cg.setAttribute('position', new THREE.Float32BufferAttribute(cliffP, 3));
     cg.setAttribute('color', new THREE.Float32BufferAttribute(cliffC, 3));
     cg.computeVertexNormals();
-    this.cliffMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonGradient(), side: THREE.DoubleSide });
+    this.cliffMat = toonMat({ vertexColors: true, side: THREE.DoubleSide }, { scale: 0.25, strength: 0.8 });
     this.cliff = new THREE.Mesh(cg, this.cliffMat);
 
     const gg = new THREE.BufferGeometry();
     gg.setAttribute('position', new THREE.Float32BufferAttribute(glowP, 3));
-    this.glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(PALETTE.yolk).multiplyScalar(1.6), side: THREE.DoubleSide });
+    this.glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(PALETTE.yolk).multiplyScalar(1.2), side: THREE.DoubleSide });
     this.glowBand = new THREE.Mesh(gg, this.glowMat);
 
     const rg = new THREE.BufferGeometry();
@@ -417,6 +418,8 @@ export class Layer {
       });
       im.instanceMatrix.needsUpdate = true;
       im.computeBoundingSphere();
+      im.castShadow = true;
+      im.receiveShadow = true;
       this.group.add(im);
       if (outline) {
         const o = new THREE.InstancedMesh(geo, outlineMaterial(outline), dirs.length);
@@ -516,6 +519,7 @@ export class Layer {
     for (const p of this.peninsulas) {
       const g = new THREE.Group();
       const egg = new THREE.Mesh(shellGeo, toon(0xe9e1cb));
+      egg.castShadow = true;
       egg.scale.set(1.7, 2.2, 1.7);
       egg.position.y = 1.9;
       ink(egg, 0.06);
@@ -548,11 +552,12 @@ export class Layer {
   setDepthLook(k) {
     const amber = new THREE.Color(PALETTE.yolkDeep);
     const kk = Math.max(0, k);
-    const dim = Math.pow(0.42, kk);
+    // inner shells: dimmer albedo but lit from within by warm yolk light
+    const dim = Math.pow(0.55, kk);
     this.shellMat.color.setScalar(dim);
-    this.shellMat.emissive.copy(amber).multiplyScalar(Math.min(0.4, kk * 0.22));
+    this.shellMat.emissive.copy(amber).multiplyScalar(Math.min(0.5, kk * 0.42));
     this.cliffMat.color.setScalar(dim);
-    this.cliffMat.emissive.copy(amber).multiplyScalar(Math.min(0.4, kk * 0.2));
+    this.cliffMat.emissive.copy(amber).multiplyScalar(Math.min(0.45, kk * 0.3));
     const fade = k < 0 ? clamp(1 + k * 3, 0, 1) : 1;
     const t = fade < 1;
     for (const m of this.fadeMats) {
