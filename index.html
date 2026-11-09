@@ -32,6 +32,7 @@
       </div>
       <div id="fps"></div>
       <button id="touch-coil">COIL</button>
+      <button id="touch-pause" aria-label="Pause">❚❚</button>
     </div>
 
     <div id="title" class="overlay">
@@ -39,7 +40,12 @@
         <h1>THE CLUCKIPEDE</h1>
         <h2>vs. The Brine Horde</h2>
         <p class="tag">Slither through the nested shells of the Infinite Egg. Curl your armoured spine into crossfire. Find the golden Chalaza Funnel and descend.</p>
-        <div class="controls">
+        <div class="controls touch-only">
+          <div><kbd>drag</kbd><span>Slither toward your finger</span></div>
+          <div><kbd>hold COIL</kbd> / <kbd>2nd finger</kbd><span>Coil tight — release to <b>slingshot</b></span></div>
+          <div><kbd>❚❚</kbd><span>Pause</span></div>
+        </div>
+        <div class="controls desktop-only">
           <div><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> or <kbd>mouse</kbd><span>Slither (steer)</span></div>
           <div><kbd>Space</kbd> / <kbd>Shift</kbd> / <kbd>hold click</kbd><span>Coil tight — release to <b>slingshot</b></span></div>
           <div><kbd>P</kbd> / <kbd>Esc</kbd><span>Pause</span> &nbsp; <kbd>M</kbd><span>Mute</span></div>
@@ -50,18 +56,18 @@
           <li>Ram the calcified caches at the end of dead-end peninsulas to weld new guns.</li>
           <li>Falling off a ledge skips the depth buff and rips off your tail. Use the funnel.</li>
         </ul>
-        <button class="go">PRESS ENTER / CLICK TO HATCH</button>
+        <button class="go"><span class="desktop-only">PRESS ENTER / CLICK</span><span class="touch-only">TAP</span> TO HATCH</button>
         <div id="best"></div>
       </div>
     </div>
 
-    <div id="pause" class="overlay hidden"><div class="card small"><h1>PAUSED</h1><button class="go">ESC / CLICK TO RESUME</button></div></div>
+    <div id="pause" class="overlay hidden"><div class="card small"><h1>PAUSED</h1><button class="go"><span class="desktop-only">ESC / CLICK</span><span class="touch-only">TAP</span> TO RESUME</button></div></div>
 
     <div id="gameover" class="overlay hidden">
       <div class="card small">
         <h1>BRINED!</h1>
         <div id="over-stats"></div>
-        <button class="go">ENTER / CLICK TO HATCH AGAIN</button>
+        <button class="go"><span class="desktop-only">ENTER / CLICK</span><span class="touch-only">TAP</span> TO HATCH AGAIN</button>
       </div>
     </div>
 

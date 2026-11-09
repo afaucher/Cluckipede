@@ -27,7 +27,7 @@ URL options: `?seed=1234` gives a reproducible egg; `?nobloom` turns off bloom; 
 | `P` / `Esc` | Pause |
 | `M` | Mute |
 | `B` | Toggle bloom |
-| Touch | Drag to steer, hold the COIL button (or use two fingers) to coil |
+| Touch | Drag to steer toward your finger, hold COIL (or put a second finger down) to coil, ❚❚ to pause. Portrait and landscape both work. |
 
 ## What's implemented
 

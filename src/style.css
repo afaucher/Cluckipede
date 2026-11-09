@@ -19,12 +19,12 @@ b { color: var(--yolk); }
 
 #hud { position: fixed; inset: 0; pointer-events: none; }
 .panel { background: var(--panel); border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); }
-#stats { position: absolute; top: 14px; left: 14px; padding: 8px 12px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; font-size: 13px; }
+#stats { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: calc(14px + env(safe-area-inset-left, 0px)); padding: 8px 12px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; font-size: 13px; }
 #stats div { display: contents; }
 #stats span { color: #bfae8c; letter-spacing: 0.08em; font-size: 11px; align-self: center; }
 #stats b { font-family: 'Bangers', 'Impact', sans-serif; font-size: 20px; letter-spacing: 0.04em; font-weight: 400; }
 
-#compass { position: absolute; top: 14px; right: 14px; width: 86px; height: 86px; border-radius: 50%; background: var(--panel); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); display: grid; place-items: center; }
+#compass { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); width: 86px; height: 86px; border-radius: 50%; background: var(--panel); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); display: grid; place-items: center; }
 #compass-arrow { position: absolute; inset: 8px; }
 #compass-arrow::before { content: ''; position: absolute; left: 50%; top: 0; transform: translateX(-50%); border: 10px solid transparent; border-bottom: 22px solid var(--yolk); border-top: 0; filter: drop-shadow(0 0 6px rgba(255, 176, 46, 0.8)); }
 #compass-label { position: absolute; top: 34px; font-size: 9px; letter-spacing: 0.15em; color: #bfae8c; }
@@ -42,7 +42,7 @@ b { color: var(--yolk); }
 #adrift { position: absolute; top: 76px; left: 50%; transform: translateX(-50%); font-family: 'Bangers', sans-serif; font-size: 22px; letter-spacing: 0.06em; color: #ff8a5a; text-shadow: 2px 2px 0 var(--ink); animation: blink 0.5s steps(2) infinite; white-space: nowrap; }
 @keyframes blink { 50% { opacity: 0.55; } }
 
-#bottom { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; width: calc(100vw - 32px); }
+#bottom { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; width: calc(100vw - 32px); }
 #spine { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; padding: 6px 8px; background: var(--panel); border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); max-width: 100%; }
 .pip { width: 26px; height: 30px; border-radius: 9px 9px 6px 6px; border: 2px solid var(--ink); position: relative; display: grid; place-items: center; font-family: 'Bangers', sans-serif; font-size: 12px; color: var(--ink); }
 .pip.head { background: #f6f1e7; font-size: 16px; border-radius: 50%; width: 30px; }
@@ -60,8 +60,13 @@ b { color: var(--yolk); }
 #charge-fill.burst { background: linear-gradient(90deg, #fff, #ff7a2a); }
 
 #fps { position: absolute; bottom: 6px; right: 10px; font-size: 10px; color: #7a6a50; }
-#touch-coil { display: none; }
-body.touch #touch-coil { display: block; position: absolute; right: 18px; bottom: 110px; width: 84px; height: 84px; border-radius: 50%; border: 3px solid var(--ink); background: rgba(255, 176, 46, 0.8); color: var(--ink); font-family: 'Bangers', sans-serif; font-size: 20px; pointer-events: auto; box-shadow: 3px 3px 0 var(--ink); }
+#touch-coil, #touch-pause, .touch-only { display: none; }
+body.touch .touch-only { display: revert; }
+body.touch .desktop-only { display: none; }
+body.touch .controls.touch-only { display: grid; }
+body.touch #touch-coil { display: block; position: absolute; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: calc(118px + env(safe-area-inset-bottom, 0px)); width: 74px; height: 74px; border-radius: 50%; border: 3px solid var(--ink); background: rgba(255, 176, 46, 0.62); color: var(--ink); font-family: 'Bangers', sans-serif; font-size: 19px; pointer-events: auto; box-shadow: 3px 3px 0 var(--ink); touch-action: none; -webkit-user-select: none; user-select: none; }
+body.touch #touch-coil:active { background: rgba(255, 176, 46, 0.95); transform: scale(0.94); }
+body.touch #touch-pause { display: block; position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: var(--panel); color: var(--ivory); font-size: 14px; pointer-events: auto; box-shadow: 2px 2px 0 var(--ink); }
 
 .overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(26, 15, 7, 0.55), rgba(26, 15, 7, 0.92)); cursor: pointer; overflow-y: auto; }
 #title { background: linear-gradient(rgba(26, 15, 7, 0.55), rgba(26, 15, 7, 0.9)), url('/concept-art.jpg') center / cover no-repeat; }
@@ -82,11 +87,26 @@ button.go { font-family: 'Bangers', sans-serif; font-size: 22px; letter-spacing:
 #over-stats div { display: flex; justify-content: space-between; border-bottom: 1px dashed #4a3a26; padding: 3px 0; }
 #over-stats b { font-family: 'Bangers', sans-serif; font-size: 18px; font-weight: 400; }
 
-@media (max-width: 600px) {
-  #stats { font-size: 11px; padding: 6px 8px; }
-  #stats b { font-size: 16px; }
+@media (max-height: 500px) {
+  body.touch #touch-coil { bottom: calc(70px + env(safe-area-inset-bottom, 0px)); width: 64px; height: 64px; }
+  .tips { display: none; }
+  h1 { font-size: 40px; }
+}
+@media (max-width: 600px), (max-height: 500px) {
+  #stats { font-size: 11px; padding: 5px 8px; gap: 0 10px; }
+  #stats span { font-size: 9px; }
+  #stats b { font-size: 15px; }
+  #msgs { top: 70px; }
+  .msg { font-size: 12px; padding: 5px 10px; }
+  #adrift { font-size: 17px; top: 64px; }
+  #charge { width: 160px; height: 12px; }
+  .card { padding: 16px 18px; }
+  .tag { font-size: 13px; }
+  button.go { font-size: 19px; padding: 8px 18px; }
   #compass { width: 70px; height: 70px; }
   #compass-label { top: 26px; } #compass-dist { top: 37px; }
-  .pip { width: 18px; height: 22px; font-size: 9px; }
+  .pip { width: 18px; height: 22px; font-size: 9px; border-width: 1.5px; }
+  .pip.head { width: 22px; font-size: 12px; }
+  #spine { padding: 4px 6px; gap: 2px; }
   .controls, .tips { font-size: 12px; }
 }

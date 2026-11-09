@@ -30,7 +30,8 @@ class Game {
   constructor() {
     this.canvas = document.getElementById('game');
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, powerPreference: 'high-performance' });
-    this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    this.touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.touch ? 1.5 : 2);
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -43,6 +44,7 @@ class Game {
     this.scene.background = new THREE.Color(0x1a0f07);
     this.scene.fog = new THREE.Fog(0x4a2c12, 90, 280);
     this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 1200);
+    this._fitFov();
 
     this._buildSky();
     this._buildLights();
@@ -62,6 +64,7 @@ class Game {
     this.horde = new Horde(this.scene, this.fx, this.audio);
     this.player = new Cluckipede(this.scene, this.fx, this.audio);
     this.rig = new CameraRig(this.camera);
+    this._fitFov();
     this.hud = new HUD();
     this.input = new Input(this.canvas);
 
@@ -97,7 +100,11 @@ class Game {
     });
     document.getElementById('touch-coil').addEventListener('touchstart', (e) => { e.preventDefault(); this.input.touchCoil = true; }, { passive: false });
     document.getElementById('touch-coil').addEventListener('touchend', (e) => { e.preventDefault(); this.input.touchCoil = false; }, { passive: false });
-    if ('ontouchstart' in window) document.body.classList.add('touch');
+    if (this.touch) document.body.classList.add('touch');
+    document.getElementById('touch-pause').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (this.state === 'playing') { this.state = 'paused'; this.hud.show('pause'); }
+    });
     for (const o of document.querySelectorAll('.overlay')) o.addEventListener('click', () => this.input.pressed.add('Click'));
 
     this.newGame(); // build a world behind the title screen
@@ -142,16 +149,31 @@ class Game {
     this.key.castShadow = true;
     const sc = this.key.shadow.camera;
     sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 260;
-    this.key.shadow.mapSize.set(2048, 2048);
+    this.key.shadow.mapSize.setScalar(this.touch ? 1024 : 2048);
     this.key.shadow.bias = -0.0006;
     this.key.shadow.normalBias = 0.06;
     this.scene.add(this.ambient, this.key, this.fill, this.key.target, this.fill.target);
   }
 
+  /** Keep at least ~62° of horizontal view so portrait phones aren't zoomed in. */
+  _fitFov() {
+    const aspect = window.innerWidth / window.innerHeight;
+    const minH = THREE.MathUtils.degToRad(56);
+    const vNeeded = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(minH / 2) / aspect));
+    this.camera.fov = THREE.MathUtils.clamp(vNeeded, 50, 70);
+    this.camera.aspect = aspect;
+    // tall screens: tilt further down so ground (not sky) fills the extra height
+    if (this.rig) {
+      const tall = THREE.MathUtils.clamp((1 - aspect) / 0.55, 0, 1);
+      this.rig.distScale = 1 + tall * 0.08;
+      this.rig.pitchBias = THREE.MathUtils.degToRad(16) * tall;
+    }
+    this.camera.updateProjectionMatrix();
+  }
+
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this._fitFov();
     this.renderer.setSize(w, h);
     this.composer.setPixelRatio(this.pixelRatio);
     this.composer.setSize(w, h);

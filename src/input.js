@@ -29,12 +29,12 @@ export class Input {
 
     const onTouch = (e) => {
       e.preventDefault();
-      const t = e.touches[0];
-      if (!t) { this.mouse.active = false; return; }
+      const t = e.targetTouches[0];
+      if (!t) { this.mouse.active = false; this.mouse.down = false; return; }
       this.mouse.active = true;
       this.mouse.x = t.clientX;
       this.mouse.y = t.clientY;
-      this.mouse.down = e.touches.length >= 2;
+      this.mouse.down = e.targetTouches.length >= 2; // second finger on the field also coils
     };
     canvas.addEventListener('touchstart', (e) => { this.pressed.add('Click'); onTouch(e); }, { passive: false });
     canvas.addEventListener('touchmove', onTouch, { passive: false });

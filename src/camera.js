@@ -11,6 +11,8 @@ export class CameraRig {
     this.forward = new THREE.Vector3(0, 0, 1);
     this.dist = CFG.CAM_DIST;
     this.shakeAmt = 0;
+    this.distScale = 1;
+    this.pitchBias = 0;
     this.topDown = 0;
     this.focus = new THREE.Vector3();
     this._up = new THREE.Vector3();
@@ -41,9 +43,9 @@ export class CameraRig {
     toTangent(this.forward, n);
 
     this.topDown += (wantTop - this.topDown) * (snap ? 1 : damp(wantTop > this.topDown ? 3 : 1.2, dt));
-    const pitch = lerp(CFG.CAM_PITCH_ISO, CFG.CAM_PITCH_TOP, this.topDown);
+    const pitch = lerp(Math.min(CFG.CAM_PITCH_TOP, CFG.CAM_PITCH_ISO + this.pitchBias), CFG.CAM_PITCH_TOP, this.topDown);
     this.pitch = pitch;
-    const targetDist = CFG.CAM_DIST + clamp(segCount, 0, 30) * 0.7 + this.topDown * 8;
+    const targetDist = (CFG.CAM_DIST + clamp(segCount, 0, 30) * 0.7 + this.topDown * 8) * this.distScale;
     this.dist += (targetDist - this.dist) * (snap ? 1 : damp(2, dt));
 
     const f = this.forward;
